@@ -1,0 +1,11 @@
+slug = "vending"
+bundle = [
+    "docs/README.pdf",
+    "tests/*.py",
+    "main.py",
+    "vendor.py",
+    "data/*.input.dat",
+    "data/*.expected.dat",
+    "data/*.stdout",
+]
+todo = ["main.py"]
