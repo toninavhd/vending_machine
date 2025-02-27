@@ -1,8 +1,15 @@
 def run(input_file: str, output_file: str) -> None:
-    with open(input_file, 'r') as f:
+    with open(input_file) as f:
         operations = f.read()
+    operation_log, vending_machine = process_operation(operations)
+    with open(output_file, 'w') as f:
+        f.write(f"{vending_machine['balance']}\n")
+        for product, details in vending_machine['products'].items():
+            f.write(f"{product} {details['stock']} {details['price']}\n")
+    for log in operation_log:
+        print(log)
 
-def process_operation(operation: str)-> dict:
+def process_operation(operation: str) -> tuple[list[str], dict]:
     vending_machine = {
         'balance': 0,
         'products': {}
@@ -15,44 +22,47 @@ def process_operation(operation: str)-> dict:
         if not parts:
             continue
         oper_code = parts[0]
-    #aqui se comprueba se empiezan a procesar las operaciones segun los codigos q vienen recogidos en oper_code
-    # vi que tambien se podia hacer esto usando matchcase y seria cambiando el if oper_code de la siguiente manera:
-    
-    #match oper_code:
-        #case 'O':
-        if oper_code == 'O':
-            product = parts[1]
-            quantity = int(parts[2])
-            money = int(parts[3])
-            #aqui se comprueba si el producto existe
-            if product not in vending_machine['products']:
-                operation_log.append(f'{line}: PRODUCT NOT FOUND')
-                continue
-            #aqui si hay stock
-            if vending_machine['products'][product]['stock'] < quantity:
-                operation_log.append(f'{line}: OUT OF STOCK')
-                continue
-            total_price = vending_machine['products'][product]['price']
-            if money < total_price:
-                operation_log.append(f'{line}: NOT ENOUGH USER MONEY')
-                continue
-            #aqui se resta el stock
-            vending_machine['products'][product]['stock'] -= quantity
-            #aqui se suma el dinero
-            vending_machine['balance'] += total_price
-            operation_log.append(f'{line}: OK')
-
-        elif oper_code == 'R':
-            product = parts[1]
-            quantity = int(parts[2])
-            #aqui se comprueba si el producto existe
-            if product not in vending_machine['products']:
-                operation_log.append(f'{line}: PRODUCT NOT FOUND')
-                continue
-            #aqui se suma el stock
-            vending_machine['products'][product]['stock'] += quantity
-            operation_log.append(f'{line}: OK')
         
+        match oper_code:
+            case 'O':
+                product = parts[1]
+                quantity = int(parts[2])
+                money = int(parts[3])
+                if product not in vending_machine['products']:
+                    operation_log.append(f'{line}: PRODUCT NOT FOUND')
+                elif vending_machine['products'][product]['stock'] < quantity:
+                    operation_log.append(f'{line}: OUT OF STOCK')
+                else:
+                    total_price = vending_machine['products'][product]['price'] * quantity
+                    if money < total_price:
+                        operation_log.append(f'{line}: NOT ENOUGH USER MONEY')
+                    else:
+                        vending_machine['products'][product]['stock'] -= quantity
+                        vending_machine['balance'] += total_price
+                        operation_log.append(f'{line}: OK')
+            case 'R':
+                product = parts[1]
+                quantity = int(parts[2])
+                if product not in vending_machine['products']:
+                    vending_machine['products'][product] = {'price': 1, 'stock': 0}
+                vending_machine['products'][product]['stock'] += quantity
+                operation_log.append(f'{line}: OK')
+            case 'P':
+                product = parts[1]
+                price = int(parts[2])
+                if product not in vending_machine['products']:
+                    vending_machine['products'][product] = {'stock': 0, 'price': price}
+                else:
+                    vending_machine['products'][product]['price'] = price
+                operation_log.append(f'{line}: OK')
+            case 'M':
+                money = int(parts[1])
+                vending_machine['balance'] += money
+                operation_log.append(f'{line}: OK')
+            case _:
+                operation_log.append(f'{line}: UNKNOWN OPERATION')
+
+    return operation_log, vending_machine
 
 # DO NOT TOUCH THE CODE BELOW
 if __name__ == '__main__':
